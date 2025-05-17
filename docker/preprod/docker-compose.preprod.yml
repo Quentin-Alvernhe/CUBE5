@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  db_preprod:
+    image: mysql:8.0
+    container_name: db_preprod
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password_preprod
+      MYSQL_DATABASE: app_db
+      MYSQL_USER: app_user
+      MYSQL_PASSWORD: app_password_preprod
+    ports:
+      - "3308:3306"
+    volumes:
+      - db_data_preprod:/var/lib/mysql
+      - ../../sql/import.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - preprod_network
+
+  web_preprod:
+    build:
+      context: ../../
+      dockerfile: docker/preprod/web/Dockerfile
+    container_name: web_preprod
+    depends_on:
+      - db_preprod
+    ports:
+      - "8081:80"
+    networks:
+      - preprod_network
+    environment:
+      - DB_HOST=db_preprod
+      - DB_USER=app_user
+      - DB_PASSWORD=app_password_preprod
+      - DB_NAME=app_db
+      - ENVIRONMENT=preproduction
+
+volumes:
+  db_data_preprod:
+    name: db_data_preprod
+
+networks:
+  preprod_network:
+    name: preprod_network

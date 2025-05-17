@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  db_prod:
+    image: mysql:8.0
+    container_name: db_prod
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password_prod
+      MYSQL_DATABASE: app_db
+      MYSQL_USER: app_user
+      MYSQL_PASSWORD: app_password_prod
+    ports:
+      - "3309:3306"
+    volumes:
+      - db_data_prod:/var/lib/mysql
+      - ../../sql/import.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - prod_network
+
+  web_prod:
+    build:
+      context: ../../
+      dockerfile: docker/prod/web/Dockerfile
+    container_name: web_prod
+    depends_on:
+      - db_prod
+    ports:
+      - "8082:80"
+    networks:
+      - prod_network
+    environment:
+      - DB_HOST=db_prod
+      - DB_USER=app_user
+      - DB_PASSWORD=app_password_prod
+      - DB_NAME=app_db
+      - ENVIRONMENT=production
+
+volumes:
+  db_data_prod:
+    name: db_data_prod
+
+networks:
+  prod_network:
+    name: prod_network
